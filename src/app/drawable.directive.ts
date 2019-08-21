@@ -25,6 +25,7 @@ export class DrawableDirective implements OnInit {
     this.ctx = this.canvas.getContext('2d');
   }
 
+  @HostListener('touchstart', ['$event'])
   @HostListener('mouseup', ['$event'])
   onUp(e) {
     this.newImage.emit(this.getImgData());
@@ -35,6 +36,7 @@ export class DrawableDirective implements OnInit {
     this.setPosition(e);
   }
 
+  @HostListener('touchend', ['$event'])
   @HostListener('mousedown', ['$event'])
   onMove(e) {
     this.setPosition(e);
