@@ -14,8 +14,8 @@ export class DigitComponent implements AfterViewInit {
   model: tf.LayersModel;
   predictions: any;
 
-  // @ViewChild(DrawableDirective, {static: false}) canvas!:DrawableDirective;
-  @ViewChild(PinchDirective, {static: false}) canvas!:PinchDirective;
+  @ViewChild(DrawableDirective, {static: false}) canvas!:DrawableDirective;
+  // @ViewChild(PinchDirective, {static: false}) canvas!:PinchDirective;
 
   constructor() { }
 
