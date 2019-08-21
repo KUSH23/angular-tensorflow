@@ -36,12 +36,13 @@ export class DrawableDirective implements OnInit {
     this.setPosition(e);
   }
 
-  @HostListener('touchend', ['$event'])
+  @HostListener('touchmove', ['$event'])
   @HostListener('mousedown', ['$event'])
   onMove(e) {
     this.setPosition(e);
   }
 
+  @HostListener('touchend', ['$event']) 
   @HostListener('mousemove', ['$event'])
   onDown(e) {
 

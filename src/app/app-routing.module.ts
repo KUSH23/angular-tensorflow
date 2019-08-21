@@ -5,7 +5,7 @@ import { DigitComponent } from './digit/digit.component';
 import { HomeComponent } from './home/home.component';
 
 const routes: Routes = [
-  { path: '', redirectTo: 'home', pathMatch: 'prefix' },
+  { path: '', redirectTo: 'digit-recognizer', pathMatch: 'prefix' },
   {path: 'home', component: HomeComponent},
   {path: 'digit-recognizer', component: DigitComponent},
   {path: 'test', component: TestComponent},
