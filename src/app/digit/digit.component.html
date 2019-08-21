@@ -3,6 +3,9 @@
     <div class="col-sm">
     <h3>Draw Here</h3>
         <div class="wrapper">
+            <canvas appDrag (newImage)="predict($event)"></canvas><br>
+        </div>
+        <div class="wrapper">
             <canvas drawable (newImage)="predict($event)"></canvas><br>
         </div>
 
