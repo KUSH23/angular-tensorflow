@@ -1,153 +1,138 @@
-import { Directive, HostListener, Renderer, ElementRef, HostBinding } from '@angular/core';
+import { Directive, HostListener, ElementRef, Output, EventEmitter, AfterViewInit, OnDestroy } from '@angular/core';
+import { Observable, fromEvent } from 'rxjs';
+import { distinctUntilChanged } from 'rxjs/operators';
 
 @Directive({
-  selector: '[appDrag]'
+  selector: '[pinch]'
 })
-export class DragDirective {
-  touchmoveListenFunc: Function = null;
-  touchendListenFunc: Function = null;
-  touchcancelListenFunc: Function = null;
-  oversize = 80;
-  containerWidth: number = 0;
-  touchX: number = 0;
-  moveX: number = 0;
-  positionX: number = 0;
-  arrow: number = 0;
-  constructor(private elementRef: ElementRef, private renderer: Renderer) {
-    this.containerWidth = this.elementRef.nativeElement.parentElement.offsetWidth;
-    this.childrenResize();
 
-    this.renderer.listen(window, 'resize', (e) => {
-      this.containerWidth = this.elementRef.nativeElement.parentElement.offsetWidth;
-      this.childrenResize();
-    });
-  }
-
-  ngAfterContentInit() {
-    this.childrenResize();
-  }
-
+export class PinchDirective implements AfterViewInit, OnDestroy {
   
-  @HostListener('mousedown', ['$event'])
+  // flag that is set when 2 fingers touch the screen
+  private isPinching = false;
+
+  // initial scale no need to change
+  private scale = 1;
+
+  // store the initial distance between the fingers
+  // so we can calculate with it
+  private initalDistance;
+
+  // used to store the Observable created from the touchmove event
+  // so we can unsubscribe from it when ngDestroy is called
+  private touchMove;
+
+  constructor(
+
+    // the actual element
+    private el: ElementRef
+
+  ) { }
+
+  public ngAfterViewInit() {
+
+    // start Observing the touchmove event
+    this.touchMove = fromEvent(this.el.nativeElement, 'touchmove')
+      // since both fingers trigger a move event, broadcast only
+      // a new scale what it actually changed
+      .pipe(distinctUntilChanged())
+      .subscribe((event) => {
+
+        // call the onTouchMove
+        this.onTouchMove(event);
+
+      });
+
+  }
+
+  // extend the outputs to your needs, for now we just use
+  // the defaults, like move, start and end
+  @Output()
+  public pinchmove: EventEmitter<any> = new EventEmitter<any>();
+
+  @Output()
+  public pinchstart: EventEmitter<any> = new EventEmitter<any>();
+
+  @Output()
+  public pinchend: EventEmitter<any> = new EventEmitter<any>();
+
+
   @HostListener('touchstart', ['$event'])
-  onStart(event) {
-        
-    if (event.touches) {
-      this.touchX =  event.touches[0].clientX;
-      this.removePreviousTouchListeners();
-      this.touchmoveListenFunc = this.renderer.listen(event.target, 'touchmove', (e) => { this.onMove(e); });
-      this.touchendListenFunc = this.renderer.listen(event.target, 'touchend', (e) => { this.removePreviousTouchListeners(); this.onEnd(e); });
-      this.touchcancelListenFunc = this.renderer.listen(event.target, 'touchcancel', (e) => { this.removePreviousTouchListeners(); this.onEnd(e); });
-    }
-    else{
-      this.touchX = event.clientX ;
-      this.touchmoveListenFunc = this.renderer.listenGlobal(event.target, 'mousemove', (e) => { this.onMove(e); });
-      this.touchendListenFunc = this.renderer.listenGlobal(event.target, 'mouseup', (e) => { this.removePreviousTouchListeners(); this.onEnd(e); });
-      this.touchcancelListenFunc = this.renderer.listenGlobal(event.target, 'onmouseleave', (e) => { this.removePreviousTouchListeners(); this.onEnd(e); });
-      
-     
-    }
-  }
+  public onTouchStart(e) {
 
-  // @HostListener('touchmove', ['$event'])
-  onMove(event) {
-      let clientX =  event.clientX || event.touches[0].clientX;
-      this.moveX = clientX- this.touchX;
-      this.renderer.setElementStyle(this.elementRef.nativeElement, 'transition', null);
-      this.renderer.setElementStyle(this.elementRef.nativeElement, '-webkit-transform', 'translate3d(' + (this.positionX + this.moveX) + 'px,0px,0px)');
-      this.renderer.setElementStyle(this.elementRef.nativeElement, 'transform', 'translate3d(' + (this.positionX + this.moveX) + 'px,0px,0px)');
-  }
+    // set the flag to true, only if 2 fingers touch te screen
+    if (e.touches.length === 2) {
 
+      // emit the touchStart event
+      this.pinchstart.emit(e);
 
-  // @HostListener('touchend', ['$event'])     
-  // @HostListener('touchcancel', ['$event']) 
-  onEnd(event) {
-      this.removePreviousTouchListeners();
-    if (Math.abs(this.moveX) > this.oversize) {
-      this.next(this.moveX > 0 ? 1 : -1);
-    }
-    else {
-      this.next(0);
+      this.isPinching = true;
+
     }
   }
 
 
-  /**
-   * Dom Animation이 끝난후에 작업
-   * @param event 
-   */
-  @HostListener('animationend', ['$event'])
-  @HostListener('webkitAnimationEnd', ['$event'])
-  @HostListener('MSAnimationEnd', ['$event'])
-  @HostListener('transitionend', ['$event'])
-  @HostListener('webkitTransitionEnd', ['$event'])
-  onAnimationEnd(event) {
-    if (this.arrow == -1) {
-      //앞에있는 자식을 뒤로 보낸다
-      this.elementRef.nativeElement.appendChild(this.elementRef.nativeElement.children[0]);
-    } else if (this.arrow == 1) {
-      //뒤에 있는 자식을 앞으로 보낸다.
-      this.elementRef.nativeElement.prepend(this.elementRef.nativeElement.children[2]);
+  @HostListener('touchend', ['$event'])
+  public onTouchEnd(e) {
+
+    if (this.isPinching) {
+
+      // reset the initial distance
+      this.initalDistance = undefined;
+
+      // we are not scaling anymore
+      this.isPinching = false;
+
+      this.pinchend.emit(e);
+
     }
-    this.init();
   }
 
 
-  ngOnDestroy() {
-    this.removePreviousTouchListeners();
-  }
+  private onTouchMove(e) {
 
-  /**
-   * Touch이벤트 취소
-   */
-  removePreviousTouchListeners() {
-    if (this.touchmoveListenFunc !== null)
-      this.touchmoveListenFunc();             // remove previous listener
-    if (this.touchendListenFunc !== null)
-      this.touchendListenFunc();              // remove previous listener
-    if (this.touchcancelListenFunc !== null)
-      this.touchcancelListenFunc();           // remove previous listener
-    this.touchmoveListenFunc = null;
-    this.touchendListenFunc = null;
-    this.touchcancelListenFunc = null;
-  }
+    // are we pinching?
+    if (this.isPinching) {
 
-  /**
-   * 자식 사이즈 변경
-   */
-  childrenResize() {
-    let children: Array<any> = this.elementRef.nativeElement.children;
-    if (children) {
-      let cnt = children.length;
-      //wrap 사이즈 변경
-      this.elementRef.nativeElement.style.width = ((this.containerWidth * cnt) + 'px');
-      for (var i = 0; i < cnt; i++) {
-        children[i].style.width = (this.containerWidth + 'px');
+      // calculate the initial distance if not set
+      if (!this.initalDistance) {
+        this.initalDistance = this.getDistance(e);
       }
+
+      // round the scale to 2 decimals, so the distinctUntilChanged
+      // can do its work properly
+      this.scale = Math.round(this.getScale(e) * 100) / 100;
+
+      // emit the scale!
+      this.pinchmove.emit({ scale: this.scale });
+
     }
-    this.init();
   }
 
-  /**
-   * 초기화 
-   */
-  init() {
-    this.renderer.setElementStyle(this.elementRef.nativeElement, 'transition', null);
-    this.positionX = (this.containerWidth * -1);
-    //wrap를 가운데로 이동시킴
-    this.renderer.setElementStyle(this.elementRef.nativeElement, '-webkit-transform', 'translate3d(' + this.positionX + 'px, 0px, 0px)');
+
+  // calculate the scale
+  private getScale(e) {
+    return this.getDistance(e) / this.initalDistance;
   }
 
-  /**
-   * 이동방향으로 페이지 넘김
-   * @param arrow 
-   */
-  next(arrow: number) {
-    this.arrow = arrow;
-    let pos = this.containerWidth * arrow;
-    this.positionX += pos;
-    this.renderer.setElementStyle(this.elementRef.nativeElement, '-webkit-transform', '-webkit-transform 0.2s ease-in');
-    this.renderer.setElementStyle(this.elementRef.nativeElement, 'transition', 'transform 0.2s');
-    this.renderer.setElementStyle(this.elementRef.nativeElement, '-webkit-transform', 'translate3d(' + this.positionX + 'px, 0px, 0px)');
+
+  // just some basic math to calculate the distance between two points
+  private getDistance(e) {
+
+    let touch0 = e.touches[0];
+    let touch1 = e.touches[1];
+
+    return Math.sqrt(
+      (touch0.pageX - touch1.pageX) * (touch0.pageX - touch1.pageX) +
+      (touch0.pageY - touch1.pageY) * (touch0.pageY - touch1.pageY)
+    );
+
   }
+
+
+  // clean things up
+  public ngOnDestroy() {
+    this.touchMove.unsubscribe();
+  }
+
 }

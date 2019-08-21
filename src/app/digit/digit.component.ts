@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 
 import * as tf from '@tensorflow/tfjs';
 import { DrawableDirective } from '../drawable.directive';
+import { PinchDirective } from '../drag.directive';
 
 @Component({
   selector: 'app-digit',
@@ -13,7 +14,8 @@ export class DigitComponent implements AfterViewInit {
   model: tf.LayersModel;
   predictions: any;
 
-  @ViewChild(DrawableDirective, {static: false}) canvas!:DrawableDirective;
+  // @ViewChild(DrawableDirective, {static: false}) canvas!:DrawableDirective;
+  @ViewChild(PinchDirective, {static: false}) canvas!:PinchDirective;
 
   constructor() { }
 
