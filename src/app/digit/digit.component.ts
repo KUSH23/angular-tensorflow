@@ -44,4 +44,8 @@ export class DigitComponent implements AfterViewInit {
     });
   
   }
+  Onclear(){
+    this.canvas.clear();
+    this.predictions = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  }
 }
