@@ -25,26 +25,60 @@ export class DrawableDirective implements OnInit {
     this.ctx = this.canvas.getContext('2d');
   }
 
-  @HostListener('touchend', ['$event']) 
   @HostListener('mouseup', ['$event'])
   onUp(e) {
     this.newImage.emit(this.getImgData());
   }
 
-  @HostListener('mouseenter', ['$event'])
-  onEnter(e) {
-    this.setPosition(e);
-  }
+  // @HostListener('touchmove', ['$event'])
+  // @HostListener('mouseenter', ['$event'])
+  // onEnter(e) {
+  //   this.setPosition(e);
+  // }
 
-  @HostListener('touchstart', ['$event'])
   @HostListener('mousedown', ['$event'])
   onMove(e) {
     this.setPosition(e);
   }
 
-  @HostListener('touchmove', ['$event'])
   @HostListener('mousemove', ['$event'])
   onDown(e) {
+
+    if (e.buttons !== 1) {
+      return;
+    }
+
+    this.ctx.beginPath(); // begin
+
+    this.ctx.lineWidth = 10;
+    this.ctx.lineCap = 'round';
+    this.ctx.strokeStyle = '#111111';
+
+    this.ctx.moveTo(this.pos.x, this.pos.y);
+    this.setPosition(e);
+    this.ctx.lineTo(this.pos.x, this.pos.y);
+
+    this.ctx.stroke();
+  }
+
+  @HostListener('touchend', ['$event']) 
+  ontouchUp(e) {
+    this.newImage.emit(this.getImgData());
+  }
+
+  // @HostListener('touchmove', ['$event'])
+  // @HostListener('mouseenter', ['$event'])
+  // onEnter(e) {
+  //   this.setPosition(e);
+  // }
+
+  @HostListener('touchstart', ['$event'])
+  ontouchMove(e) {
+    this.setPosition(e);
+  }
+
+  @HostListener('touchmove', ['$event'])
+  ontouchDown(e) {
 
     if (e.buttons !== 1) {
       return;
