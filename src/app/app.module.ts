@@ -9,13 +9,11 @@ import { DrawableDirective } from './drawable.directive';
 import { ChartsModule } from 'ng2-charts';
 import { ChartComponent } from './chart/chart.component';
 import { HomeComponent } from './home/home.component';
-import { PinchDirective } from './drag.directive';
 
 @NgModule({
   declarations: [
     AppComponent,
     DrawableDirective,
-    PinchDirective,
     TestComponent,
     DigitComponent,
     ChartComponent,
